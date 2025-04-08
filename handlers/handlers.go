@@ -104,3 +104,21 @@ func UpdateItem(c *fiber.Ctx) error {
 	})
 
 }
+
+func DeleteItem(c *fiber.Ctx) error {
+	var itemID string = c.Params("id")
+
+	var result bool = services.DeleteItem(itemID)
+
+	if result {
+		return c.JSON(models.Response[any]{
+			Success: true,
+			Message: "item deleted",
+		})
+	}
+
+	return c.Status(http.StatusNotFound).JSON(models.Response[any]{
+		Success: false,
+		Message: "item fialed to delete",
+	})
+}
