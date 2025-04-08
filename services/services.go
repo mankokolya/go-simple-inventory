@@ -58,13 +58,19 @@ func UpdateItem(itemRequest models.ItemRequest, id string) (models.Item, error) 
 func DeleteItem(id string) bool {
 	var newItems []models.Item = []models.Item{}
 
+	var itemPresent bool = false
+
 	for _, item := range storage {
 		if item.ID != id {
 			newItems = append(newItems, item)
+		} else {
+			itemPresent = true
 		}
 	}
 
-	storage = newItems
+	if itemPresent {
+		storage = newItems
+	}
 
-	return true
+	return itemPresent
 }
