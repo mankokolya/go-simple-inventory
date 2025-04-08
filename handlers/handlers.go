@@ -36,3 +36,32 @@ func GetItemByID(c *fiber.Ctx) error {
 		Data:    item,
 	})
 }
+
+func CreateItem(c *fiber.Ctx) error {
+	var itemInput *models.ItemRequest = new(models.ItemRequest)
+
+	if err := c.BodyParser(itemInput); err != nil {
+		return c.Status(http.StatusBadRequest).JSON(models.Response[any]{
+			Success: false,
+			Message: err.Error(),
+		})
+	}
+
+	errors := itemInput.ValidateStruct()
+
+	if errors != nil {
+		return c.Status(http.StatusBadRequest).JSON(models.Response[[]*models.ErrorResponse]{
+			Success: false,
+			Message: "validation failed",
+			Data:    errors,
+		})
+	}
+
+	var createdItem models.Item = services.CreateItem(*itemInput)
+
+	return c.Status(http.StatusCreated).JSON(models.Response[models.Item]{
+		Success: true,
+		Message: "item created",
+		Data:    createdItem,
+	})
+}
