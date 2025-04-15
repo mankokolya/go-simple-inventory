@@ -1,14 +1,33 @@
 package main
 
 import (
+	"fmt"
+	"os"
+
 	"github.com/gofiber/fiber/v2"
+	"github.com/mankokolya/go-simple-inventory/database"
 	"github.com/mankokolya/go-simple-inventory/routes"
+	"github.com/mankokolya/go-simple-inventory/utils"
 )
 
-func main() {
+const DEFAULT_PORT = "3000"
+
+func NewFiberApp() *fiber.App {
 	var app *fiber.App = fiber.New()
-
 	routes.SetupRoutes(app)
+	return app
+}
 
-	app.Listen("127.0.0.1:8080")
+func main() {
+	var app *fiber.App = NewFiberApp()
+
+	database.InitDatabase(utils.GetValue("DB_NAME"))
+
+	var PORT string = os.Getenv("PORT")
+
+	if PORT == "" {
+		PORT = DEFAULT_PORT
+	}
+
+	app.Listen(fmt.Sprintf(":%s", PORT))
 }
