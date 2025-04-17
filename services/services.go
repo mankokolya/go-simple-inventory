@@ -5,23 +5,30 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/mankokolya/go-simple-inventory/database"
 	"github.com/mankokolya/go-simple-inventory/models"
 )
 
-var storage []models.Item = []models.Item{}
-
 func GetAllItems() []models.Item {
-	return storage
+
+	var items []models.Item = []models.Item{}
+
+	database.DB.Order("created_at desc").Find(&items)
+
+	return items
 }
 
 func GetItemById(id string) (models.Item, error) {
-	for _, item := range storage {
-		if item.ID == id {
-			return item, nil
-		}
+
+	var item models.Item
+
+	result := database.DB.First(&item, "id = ?", id)
+
+	if result.RowsAffected == 0 {
+		return models.Item{}, errors.New("item not found")
 	}
 
-	return models.Item{}, errors.New("item not found")
+	return item, nil
 }
 
 func CreateItem(itemRequest models.ItemRequest) models.Item {
@@ -33,44 +40,36 @@ func CreateItem(itemRequest models.ItemRequest) models.Item {
 		CreatedAt: time.Now(),
 	}
 
-	storage = append(storage, newItem)
+	database.DB.Create(&newItem)
 
 	return newItem
 }
 
 func UpdateItem(itemRequest models.ItemRequest, id string) (models.Item, error) {
-	for index, item := range storage {
-		if item.ID == id {
-			item.Name = itemRequest.Name
-			item.Price = itemRequest.Price
-			item.Quantity = itemRequest.Quantity
-			item.UpdatedAt = time.Now()
+	item, err := GetItemById(id)
 
-			storage[index] = item
-
-			return item, nil
-		}
+	if err != nil {
+		return models.Item{}, err
 	}
 
-	return models.Item{}, errors.New("item update failed, item not found")
+	item.Name = itemRequest.Name
+	item.Price = itemRequest.Price
+	item.Quantity = itemRequest.Quantity
+	item.UpdatedAt = time.Now()
+
+	database.DB.Save(&item)
+
+	return item, nil
 }
 
 func DeleteItem(id string) bool {
-	var newItems []models.Item = []models.Item{}
+	item, err := GetItemById(id)
 
-	var itemPresent bool = false
-
-	for _, item := range storage {
-		if item.ID != id {
-			newItems = append(newItems, item)
-		} else {
-			itemPresent = true
-		}
+	if err != nil {
+		return false
 	}
 
-	if itemPresent {
-		storage = newItems
-	}
+	database.DB.Delete(&item)
 
-	return itemPresent
+	return true
 }
