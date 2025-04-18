@@ -53,6 +53,18 @@ func ExtractTokenMetadata(c *fiber.Ctx) (*TokenMetadata, error) {
 	return nil, err
 }
 
+func CheckToken(c *fiber.Ctx) (bool, error) {
+	now := time.Now().Unix()
+
+	claims, err := ExtractTokenMetadata(c)
+
+	if now > claims.Expires {
+		return false, err
+	}
+
+	return true, nil
+}
+
 func verifyToken(c *fiber.Ctx) (*jwt.Token, error) {
 	tokenString := extractToken(c)
 
