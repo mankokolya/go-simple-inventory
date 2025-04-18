@@ -6,6 +6,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/mankokolya/go-simple-inventory/models"
 	"github.com/mankokolya/go-simple-inventory/services"
+	"github.com/mankokolya/go-simple-inventory/utils"
 )
 
 func GetAllItems(c *fiber.Ctx) error {
@@ -38,6 +39,16 @@ func GetItemByID(c *fiber.Ctx) error {
 }
 
 func CreateItem(c *fiber.Ctx) error {
+
+	isValid, err := utils.CheckToken(c)
+
+	if !isValid {
+		return c.Status(http.StatusUnauthorized).JSON(models.Response[any]{
+			Success: false,
+			Message: err.Error(),
+		})
+	}
+
 	var itemInput *models.ItemRequest = new(models.ItemRequest)
 
 	if err := c.BodyParser(itemInput); err != nil {
@@ -67,6 +78,16 @@ func CreateItem(c *fiber.Ctx) error {
 }
 
 func UpdateItem(c *fiber.Ctx) error {
+
+	isValid, err := utils.CheckToken(c)
+
+	if !isValid {
+		return c.Status(http.StatusUnauthorized).JSON(models.Response[any]{
+			Success: false,
+			Message: err.Error(),
+		})
+	}
+
 	var itemInput *models.ItemRequest = new(models.ItemRequest)
 
 	if err := c.BodyParser(itemInput); err != nil {
@@ -106,6 +127,16 @@ func UpdateItem(c *fiber.Ctx) error {
 }
 
 func DeleteItem(c *fiber.Ctx) error {
+
+	isValid, err := utils.CheckToken(c)
+
+	if !isValid {
+		return c.Status(http.StatusUnauthorized).JSON(models.Response[any]{
+			Success: false,
+			Message: err.Error(),
+		})
+	}
+
 	var itemID string = c.Params("id")
 
 	var result bool = services.DeleteItem(itemID)
