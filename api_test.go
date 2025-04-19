@@ -80,3 +80,19 @@ func TestSignup_Success(t *testing.T) {
 		Status(http.StatusOK).
 		End()
 }
+
+func TestSignup_ValidationFailed(t *testing.T) {
+	var userRequest *models.UserRequest = &models.UserRequest{
+		Email: "",
+		Password: "",
+	}
+
+	apitest.New().
+		HandlerFunc(FiberToHandlerFunc(newApp())).
+		Post("/api/v1/signup").
+		JSON(userRequest).
+		Expect(t).
+		Status(http.StatusBadRequest).
+		End()
+}
+
