@@ -149,3 +149,33 @@ func TestLogin_Failed(t *testing.T) {
 		Status(http.StatusInternalServerError).
 		End()
 }
+
+func TestGetItm_Success(t *testing.T) {
+	apitest.New().
+		Handler(FiberToHandlerFunc(newApp())).
+		Get("/api/v1/items").
+		Expect(t).
+		Status(http.StatusOK).
+		End()
+}
+
+func TestGetItmById_Success(t *testing.T) {
+	var item models.Item = getItem()
+
+	apitest.New().
+		Observe(cleanup).
+		HandlerFunc(FiberToHandlerFunc(newApp())).
+		Get("/api/v1/items/" + item.ID).
+		Expect(t).
+		Status(http.StatusOK).
+		End()
+}
+
+func TestGetItem_NotFound(t *testing.T) {
+	apitest.New().
+		HandlerFunc(FiberToHandlerFunc(newApp())).
+		Get("/api/v1/items/0").
+		Expect(t).
+		Status(http.StatusNotFound).
+		End()
+}
