@@ -1,10 +1,13 @@
 package database
 
 import (
+	"errors"
 	"fmt"
+	"log"
 
 	"github.com/mankokolya/go-simple-inventory/models"
 	"github.com/mankokolya/go-simple-inventory/utils"
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
@@ -33,4 +36,56 @@ func InitDatabase(dbName string) {
 	fmt.Println("Connected to the database")
 
 	DB.AutoMigrate(&models.User{}, &models.Item{})
+}
+
+func SeedItem() (models.Item, error) {
+	item, err := utils.CreateFaker[models.Item]()
+
+	if err != nil {
+		return models.Item{}, nil
+	}
+
+	DB.Create(&item)
+	log.Println("Item seeded to the database")
+
+	return item, nil
+}
+
+func SeedUser() (models.User, error) {
+	user, err := utils.CreateFaker[models.User]()
+
+	if err != nil {
+		return models.User{}, err
+	}
+
+	password, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+
+	if err != nil {
+		return models.User{}, err
+	}
+
+	var inputUser models.User = models.User{
+		ID:       user.ID,
+		Email:    user.Email,
+		Password: string(password),
+	}
+
+	DB.Create(&inputUser)
+	log.Println("User seeded to the database")
+
+	return user, nil
+}
+
+func CleanSeeders() {
+	itemResult := DB.Exec("TRUNCATE items")
+
+	userResult := DB.Exec("TRUNCATE users")
+
+	var isFailed bool = itemResult.Error != nil || userResult.Error != nil
+
+	if isFailed {
+		panic(errors.New("error when cleanin up seeders"))
+	}
+
+	log.Println("Seeders are cleaned up successfully")
 }

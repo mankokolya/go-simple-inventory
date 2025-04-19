@@ -24,7 +24,7 @@ func Signup(userInput models.UserRequest) (string, error) {
 		Password: string(password),
 	}
 
-	database.DB.Create(user)
+	database.DB.Create(&user)
 
 	token, err := utils.GenerateNewAccessToken()
 
