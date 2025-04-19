@@ -83,7 +83,7 @@ func TestSignup_Success(t *testing.T) {
 
 func TestSignup_ValidationFailed(t *testing.T) {
 	var userRequest *models.UserRequest = &models.UserRequest{
-		Email: "",
+		Email:    "",
 		Password: "",
 	}
 
@@ -96,3 +96,56 @@ func TestSignup_ValidationFailed(t *testing.T) {
 		End()
 }
 
+func TestLogin_Success(t *testing.T) {
+	database.InitDatabase(utils.GetValue("DB_TEST_NAME"))
+
+	user, err := database.SeedUser()
+
+	if err != nil {
+		panic(err)
+	}
+
+	var userRequest *models.UserRequest = &models.UserRequest{
+		Email:    user.Email,
+		Password: user.Password,
+	}
+
+	apitest.New().
+		Observe(cleanup).
+		HandlerFunc(FiberToHandlerFunc(newApp())).
+		Post("/api/v1/login").
+		JSON(userRequest).
+		Expect(t).
+		Status(http.StatusOK).
+		End()
+}
+
+func TestLogin_ValidationFailed(t *testing.T) {
+	var userRequest *models.UserRequest = &models.UserRequest{
+		Email:    "",
+		Password: "",
+	}
+
+	apitest.New().
+		HandlerFunc(FiberToHandlerFunc(newApp())).
+		Post("/api/v1/login").
+		JSON(userRequest).
+		Expect(t).
+		Status(http.StatusBadRequest).
+		End()
+}
+
+func TestLogin_Failed(t *testing.T) {
+	var userRequest *models.UserRequest = &models.UserRequest{
+		Email:    "notfound@mail.com",
+		Password: "123123",
+	}
+
+	apitest.New().
+		HandlerFunc(FiberToHandlerFunc(newApp())).
+		Post("/api/v1/login").
+		JSON(userRequest).
+		Expect(t).
+		Status(http.StatusInternalServerError).
+		End()
+}

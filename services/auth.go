@@ -38,7 +38,7 @@ func Signup(userInput models.UserRequest) (string, error) {
 func Login(userInput models.UserRequest) (string, error) {
 	var user models.User
 
-	result := database.DB.First(user, "email = ?", userInput.Email)
+	result := database.DB.First(&user, "email = ?", userInput.Email)
 
 	if result.RowsAffected == 0 {
 		return "", errors.New("user not found")
