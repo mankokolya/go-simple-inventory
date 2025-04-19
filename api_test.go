@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"io"
 	"net/http"
 	"testing"
@@ -178,4 +179,37 @@ func TestGetItem_NotFound(t *testing.T) {
 		Expect(t).
 		Status(http.StatusNotFound).
 		End()
+}
+
+func getJWTToken(t *testing.T) string {
+	database.InitDatabase(utils.GetValue("DB_TEST_NAME"))
+
+	user, err := database.SeedUser()
+
+	if err != nil {
+		panic(err)
+	}
+
+	var userRequest *models.UserRequest = &models.UserRequest{
+		Email:    user.Email,
+		Password: user.Password,
+	}
+
+	var resp *http.Response = apitest.New().
+		HandlerFunc(FiberToHandlerFunc(newApp())).
+		Post("/api/v1/login").
+		JSON(userRequest).
+		Expect(t).
+		Status(http.StatusOK).
+		End().Response
+
+	var response *models.Response[string] = &models.Response[string]{}
+
+	json.NewDecoder(resp.Body).Decode(&response)
+
+	var token string = response.Data
+
+	var JWT_TOKEN = "Bearer " + token
+
+	return JWT_TOKEN
 }
