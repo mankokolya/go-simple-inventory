@@ -181,6 +181,118 @@ func TestGetItem_NotFound(t *testing.T) {
 		End()
 }
 
+func TestCreateItem_Success(t *testing.T) {
+	itemData, err := utils.CreateFaker[models.Item]()
+
+	if err != nil {
+		panic(err)
+	}
+
+	var itemRequest *models.ItemRequest = &models.ItemRequest{
+		Name:     itemData.Name,
+		Price:    itemData.Price,
+		Quantity: itemData.Quantity,
+	}
+
+	var token string = getJWTToken(t)
+
+	apitest.New().
+		Observe(cleanup).
+		HandlerFunc(FiberToHandlerFunc(newApp())).
+		Post("/api/v1/items").
+		Header("Authorization", token).
+		JSON(itemRequest).
+		Expect(t).
+		Status(http.StatusCreated).
+		End()
+}
+
+func TestCreateItem_ValidationFailed(t *testing.T) {
+	var itemRequest *models.ItemRequest = &models.ItemRequest{
+		Name:     "",
+		Price:    0,
+		Quantity: 0,
+	}
+
+	var token string = getJWTToken(t)
+
+	apitest.New().
+		HandlerFunc(FiberToHandlerFunc(newApp())).
+		Post("/api/v1/items").
+		Header("Authorization", token).
+		JSON(itemRequest).
+		Expect(t).
+		Status(http.StatusBadRequest).
+		End()
+}
+
+func TestUpdateItem_Success(t *testing.T) {
+	var item models.Item = getItem()
+
+	var itemRequest *models.ItemRequest = &models.ItemRequest{
+		Name:     item.Name,
+		Price:    item.Price,
+		Quantity: item.Quantity,
+	}
+
+	var token string = getJWTToken(t)
+
+	apitest.New().
+		Observe(cleanup).
+		HandlerFunc(FiberToHandlerFunc(newApp())).
+		Put("/api/v1/items/"+item.ID).
+		Header("Authorization", token).
+		JSON(itemRequest).
+		Expect(t).
+		Status(http.StatusOK).
+		End()
+}
+
+func TestUpdateItem_Failed(t *testing.T) {
+	var itemRequest *models.ItemRequest = &models.ItemRequest{
+		Name:     "changed",
+		Price:    10,
+		Quantity: 10,
+	}
+
+	var token string = getJWTToken(t)
+
+	apitest.New().
+		HandlerFunc(FiberToHandlerFunc(newApp())).
+		Put("/api/v1/items/0").
+		Header("Authorization", token).
+		JSON(itemRequest).
+		Expect(t).
+		Status(http.StatusNotFound).
+		End()
+}
+
+func TestDeleteItem_Success(t *testing.T) {
+	var item models.Item = getItem()
+
+	var token string = getJWTToken(t)
+
+	apitest.New().
+		HandlerFunc(FiberToHandlerFunc(newApp())).
+		Delete("/api/v1/items/"+item.ID).
+		Header("Authorization", token).
+		Expect(t).
+		Status(http.StatusOK).
+		End()
+}
+
+func TestDeleteItem_Failed(t *testing.T) {
+	var token string = getJWTToken(t)
+
+	apitest.New().
+		HandlerFunc(FiberToHandlerFunc(newApp())).
+		Delete("/api/v1/items/0").
+		Header("Authorization", token).
+		Expect(t).
+		Status(http.StatusNotFound).
+		End()
+}
+
 func getJWTToken(t *testing.T) string {
 	database.InitDatabase(utils.GetValue("DB_TEST_NAME"))
 
